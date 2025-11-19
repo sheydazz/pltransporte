@@ -1,12 +1,19 @@
 "use client";
 import React, { useState } from "react";
 
+/**
+ * Props del componente ConfiguracionTransporte
+ */
 interface ConfiguracionTransporteProps {
   onCalcular: (datos: DatosTransporte) => void;
   colorPrimario: string;
   colorSecundario: string;
 }
 
+/**
+ * Interface que define la estructura de datos del problema de transporte
+ * Usada para pasar información entre el componente de configuración y los algoritmos
+ */
 export interface DatosTransporte {
   numOrigenes: number;
   numDestinos: number;
@@ -17,6 +24,14 @@ export interface DatosTransporte {
   costos: number[][];
 }
 
+/**
+ * Componente reutilizable para la recolección de datos del problema de transporte.
+ * Permite configurar orígenes, destinos, ofertas, demandas y matriz de costos.
+ * 
+ * @param onCalcular - Función callback que se ejecuta cuando el usuario presiona "Calcular Solución"
+ * @param colorPrimario - Color principal del tema (blue, purple, indigo)
+ * @param colorSecundario - Color secundario del tema (purple, pink, cyan)
+ */
 export default function ConfiguracionTransporte({
   onCalcular,
   colorPrimario,
@@ -37,6 +52,10 @@ export default function ConfiguracionTransporte({
   ]);
   const [mostrarTabla, setMostrarTabla] = useState(false);
 
+  /**
+   * Actualiza las dimensiones del problema (número de orígenes y destinos)
+   * y regenera las estructuras de datos correspondientes
+   */
   const actualizarDimensiones = () => {
     const newOrigenes = Array(numOrigenes)
       .fill("")
@@ -66,42 +85,69 @@ export default function ConfiguracionTransporte({
     setMostrarTabla(true);
   };
 
+  /**
+   * Actualiza el nombre de un origen específico
+   * @param index - Índice del origen a actualizar
+   * @param value - Nuevo nombre del origen
+   */
   const actualizarOrigen = (index: number, value: string) => {
     const newOrigenes = [...origenes];
     newOrigenes[index] = value;
     setOrigenes(newOrigenes);
   };
 
+  /**
+   * Actualiza el nombre de un destino específico
+   * @param index - Índice del destino a actualizar
+   * @param value - Nuevo nombre del destino
+   */
   const actualizarDestino = (index: number, value: string) => {
     const newDestinos = [...destinos];
     newDestinos[index] = value;
     setDestinos(newDestinos);
   };
 
-  /* ───────────────────────────────
-     ⭐ LÓGICA CORREGIDA DE NÚMEROS ⭐
-     ─────────────────────────────── */
-
+  /**
+   * Actualiza la oferta de un origen específico
+   * Convierte el string del input a número, manejando valores vacíos como 0
+   * @param index - Índice del origen
+   * @param value - Valor de la oferta (string del input)
+   */
   const actualizarOferta = (index: number, value: string) => {
     const newOfertas = [...ofertas];
     newOfertas[index] = value === "" ? 0 : Number(value);
     setOfertas(newOfertas);
   };
 
+  /**
+   * Actualiza la demanda de un destino específico
+   * Convierte el string del input a número, manejando valores vacíos como 0
+   * @param index - Índice del destino
+   * @param value - Valor de la demanda (string del input)
+   */
   const actualizarDemanda = (index: number, value: string) => {
     const newDemandas = [...demandas];
     newDemandas[index] = value === "" ? 0 : Number(value);
     setDemandas(newDemandas);
   };
 
+  /**
+   * Actualiza el costo de transporte de un origen a un destino específico
+   * Convierte el string del input a número, manejando valores vacíos como 0
+   * @param i - Índice del origen (fila)
+   * @param j - Índice del destino (columna)
+   * @param value - Valor del costo (string del input)
+   */
   const actualizarCosto = (i: number, j: number, value: string) => {
     const newCostos = [...costos];
     newCostos[i][j] = value === "" ? 0 : Number(value);
     setCostos(newCostos);
   };
 
-  /* ─────────────────────────────── */
-
+  /**
+   * Maneja el evento de clic en el botón "Calcular Solución"
+   * Recolecta todos los datos y los pasa al callback onCalcular
+   */
   const handleCalcular = () => {
     onCalcular({
       numOrigenes,
@@ -165,131 +211,133 @@ export default function ConfiguracionTransporte({
               Datos del Problema
             </h3>
 
-            {/* Tabla de Orígenes */}
-            <div className="mb-4">
-              <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Orígenes y Ofertas
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-300 dark:border-gray-600">
-                      <th className="text-left py-1 px-2 text-gray-600 dark:text-gray-400 font-medium">
-                        #
-                      </th>
-                      <th className="text-left py-1 px-2 text-gray-600 dark:text-gray-400 font-medium">
-                        Nombre
-                      </th>
-                      <th className="text-left py-1 px-2 text-gray-600 dark:text-gray-400 font-medium">
-                        Oferta
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {origenes.map((origen, index) => (
-                      <tr
-                        key={index}
-                        className="border-b border-gray-200 dark:border-gray-700"
-                      >
-                        <td className="py-1 px-2 text-gray-700 dark:text-gray-300">
-                          {index + 1}
-                        </td>
-                        <td className="py-1 px-2">
-                          <input
-                            type="text"
-                            value={origen}
-                            onChange={(e) =>
-                              actualizarOrigen(index, e.target.value)
-                            }
-                            className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                          />
-                        </td>
-                        <td className="py-1 px-2">
-                          <input
-                            type="number"
-                            min="0"
-                            value={ofertas[index]}
-                            onFocus={(e) => {
-                              if (e.target.value === "0") e.target.value = "";
-                            }}
-                            onBlur={(e) => {
-                              if (e.target.value === "") e.target.value = "0";
-                              actualizarOferta(index, e.target.value);
-                            }}
-                            onChange={(e) =>
-                              actualizarOferta(index, e.target.value)
-                            }
-                            className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
-                          />
-                        </td>
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* Tabla de Orígenes */}
+              <div className="mb-4 md:mb-0">
+                <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Orígenes y Ofertas
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-300 dark:border-gray-600">
+                        <th className="text-left py-1 px-2 text-gray-600 dark:text-gray-400 font-medium">
+                          #
+                        </th>
+                        <th className="text-left py-1 px-2 text-gray-600 dark:text-gray-400 font-medium">
+                          Nombre
+                        </th>
+                        <th className="text-left py-1 px-2 text-gray-600 dark:text-gray-400 font-medium">
+                          Oferta
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {origenes.map((origen, index) => (
+                        <tr
+                          key={index}
+                          className="border-b border-gray-200 dark:border-gray-700"
+                        >
+                          <td className="py-1 px-2 text-gray-700 dark:text-gray-300">
+                            {index + 1}
+                          </td>
+                          <td className="py-1 px-2">
+                            <input
+                              type="text"
+                              value={origen}
+                              onChange={(e) =>
+                                actualizarOrigen(index, e.target.value)
+                              }
+                              className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                            />
+                          </td>
+                          <td className="py-1 px-2">
+                            <input
+                              type="number"
+                              min="0"
+                              value={ofertas[index]}
+                              onFocus={(e) => {
+                                if (e.target.value === "0") e.target.value = "";
+                              }}
+                              onBlur={(e) => {
+                                if (e.target.value === "") e.target.value = "0";
+                                actualizarOferta(index, e.target.value);
+                              }}
+                              onChange={(e) =>
+                                actualizarOferta(index, e.target.value)
+                              }
+                              className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
 
-            {/* Tabla de Destinos */}
-            <div className="mb-4">
-              <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Destinos y Demandas
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-300 dark:border-gray-600">
-                      <th className="text-left py-1 px-2 text-gray-600 dark:text-gray-400 font-medium">
-                        #
-                      </th>
-                      <th className="text-left py-1 px-2 text-gray-600 dark:text-gray-400 font-medium">
-                        Nombre
-                      </th>
-                      <th className="text-left py-1 px-2 text-gray-600 dark:text-gray-400 font-medium">
-                        Demanda
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {destinos.map((destino, index) => (
-                      <tr
-                        key={index}
-                        className="border-b border-gray-200 dark:border-gray-700"
-                      >
-                        <td className="py-1 px-2 text-gray-700 dark:text-gray-300">
-                          {index + 1}
-                        </td>
-                        <td className="py-1 px-2">
-                          <input
-                            type="text"
-                            value={destino}
-                            onChange={(e) =>
-                              actualizarDestino(index, e.target.value)
-                            }
-                            className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                          />
-                        </td>
-                        <td className="py-1 px-2">
-                          <input
-                            type="number"
-                            min="0"
-                            value={demandas[index]}
-                            onFocus={(e) => {
-                              if (e.target.value === "0") e.target.value = "";
-                            }}
-                            onBlur={(e) => {
-                              if (e.target.value === "") e.target.value = "0";
-                              actualizarDemanda(index, e.target.value);
-                            }}
-                            onChange={(e) =>
-                              actualizarDemanda(index, e.target.value)
-                            }
-                            className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-orange-500 dark:bg-gray-700 dark:text-white"
-                          />
-                        </td>
+              {/* Tabla de Destinos */}
+              <div className="mb-4 md:mb-0">
+                <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Destinos y Demandas
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-300 dark:border-gray-600">
+                        <th className="text-left py-1 px-2 text-gray-600 dark:text-gray-400 font-medium">
+                          #
+                        </th>
+                        <th className="text-left py-1 px-2 text-gray-600 dark:text-gray-400 font-medium">
+                          Nombre
+                        </th>
+                        <th className="text-left py-1 px-2 text-gray-600 dark:text-gray-400 font-medium">
+                          Demanda
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {destinos.map((destino, index) => (
+                        <tr
+                          key={index}
+                          className="border-b border-gray-200 dark:border-gray-700"
+                        >
+                          <td className="py-1 px-2 text-gray-700 dark:text-gray-300">
+                            {index + 1}
+                          </td>
+                          <td className="py-1 px-2">
+                            <input
+                              type="text"
+                              value={destino}
+                              onChange={(e) =>
+                                actualizarDestino(index, e.target.value)
+                              }
+                              className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                            />
+                          </td>
+                          <td className="py-1 px-2">
+                            <input
+                              type="number"
+                              min="0"
+                              value={demandas[index]}
+                              onFocus={(e) => {
+                                if (e.target.value === "0") e.target.value = "";
+                              }}
+                              onBlur={(e) => {
+                                if (e.target.value === "") e.target.value = "0";
+                                actualizarDemanda(index, e.target.value);
+                              }}
+                              onChange={(e) =>
+                                actualizarDemanda(index, e.target.value)
+                              }
+                              className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-orange-500 dark:bg-gray-700 dark:text-white"
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
 

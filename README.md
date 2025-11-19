@@ -1,38 +1,150 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Problema de Transporte - Programación Lineal
 
-## Getting Started
+Aplicación web desarrollada con Next.js para resolver problemas de transporte utilizando tres métodos diferentes de programación lineal.
 
-First, run the development server:
+##  Descripción
+
+Esta aplicación permite resolver problemas de transporte mediante tres algoritmos:
+
+1. **Método de la Esquina Noroeste** - Algoritmo simple que inicia en la esquina noroeste de la matriz
+2. **Método del Costo Mínimo** - Optimiza los costos eligiendo primero las rutas más económicas
+3. **Método de Aproximación de Vogel (VAM)** - Método heurístico que considera penalizaciones para mejores soluciones
+
+##  Estructura del Proyecto
+
+```
+pltransporte/
+├── app/
+│   ├── components/
+│   │   └── ConfiguracionTransporte.tsx  # Componente reutilizable para recolección de datos
+│   ├── esquina/
+│   │   └── page.tsx                      # Página del método Esquina Noroeste
+│   ├── costominimo/
+│   │   └── page.tsx                      # Página del método Costo Mínimo
+│   ├── vogel/
+│   │   └── page.tsx                      # Página del método Vogel
+│   ├── page.tsx                         # Página principal (home)
+│   ├── layout.tsx                        # Layout principal
+│   └── globals.css                       # Estilos globales
+├── public/                               # Archivos estáticos
+└── README.md                             # Este archivo
+```
+
+##  Inicio Rápido
+
+### Instalación
+
+```bash
+npm install
+# o
+yarn install
+# o
+pnpm install
+```
+
+### Ejecutar en Desarrollo
 
 ```bash
 npm run dev
-# or
+# o
 yarn dev
-# or
+# o
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+##  Funcionalidades
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Recolección de Datos
 
-## Learn More
+El componente `ConfiguracionTransporte` permite:
+- Configurar el número de orígenes y destinos (1-10)
+- Nombrar cada origen y destino
+- Ingresar ofertas (cantidad disponible en cada origen)
+- Ingresar demandas (cantidad requerida en cada destino)
+- Completar la matriz de costos (costo de transportar de cada origen a cada destino)
 
-To learn more about Next.js, take a look at the following resources:
+### Algoritmos Implementados
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+#### 1. Método de la Esquina Noroeste
+- **Ubicación**: `app/esquina/page.tsx`
+- **Función principal**: `calcularEsquinaNoroeste()`
+- **Descripción**: Inicia en la esquina noroeste (arriba-izquierda) y asigna lo máximo posible, moviéndose a la derecha o abajo según corresponda.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+#### 2. Método del Costo Mínimo
+- **Ubicación**: `app/costominimo/page.tsx`
+- **Función principal**: `calcularCostoMinimo()`
+- **Descripción**: Selecciona siempre la celda con el costo unitario más bajo disponible, optimizando la solución inicial.
 
-## Deploy on Vercel
+#### 3. Método de Aproximación de Vogel (VAM)
+- **Ubicación**: `app/vogel/page.tsx`
+- **Función principal**: `vogelMethod()`
+- **Descripción**: Calcula penalizaciones (diferencia entre los dos menores costos) para cada fila y columna, seleccionando la de mayor penalización.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+##  Características de la UI
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# pltransporte
-# pltransporte
+- **Diseño Responsive**: Se adapta a dispositivos móviles y escritorio
+- **Modo Oscuro**: Soporte completo para tema claro/oscuro
+- **Interfaz Moderna**: Diseño con Tailwind CSS y gradientes
+- **Visualización de Resultados**: Tablas interactivas con resaltado de asignaciones
+- **Validación**: Verificación de problemas balanceados (oferta total = demanda total)
+
+## 📝 Interfaces TypeScript
+
+### DatosTransporte
+```typescript
+interface DatosTransporte {
+  numOrigenes: number;
+  numDestinos: number;
+  origenes: string[];
+  destinos: string[];
+  ofertas: number[];
+  demandas: number[];
+  costos: number[][];
+}
+```
+
+### Resultado (común a todos los métodos)
+```typescript
+interface Resultado {
+  asignaciones: number[][];  // Matriz de asignaciones
+  costoTotal: number;        // Costo total de la solución
+  origenes: string[];        // Nombres de orígenes
+  destinos: string[];        // Nombres de destinos
+  costos: number[][];        // Matriz de costos original
+}
+```
+
+## 🔧 Tecnologías Utilizadas
+
+- **Next.js 15** - Framework React con App Router
+- **React 19** - Biblioteca de UI
+- **TypeScript** - Tipado estático
+- **Tailwind CSS** - Framework de estilos
+- **ESLint** - Linter para calidad de código
+
+## 👥 Integrantes
+
+- **Sheyla Daza**
+- **Julian Gutiérrez**
+
+## 📄 Licencia
+
+Proyecto académico - Parcial 3 de Programación Lineal
+
+---
+
+## 🎯 Uso
+
+1. Selecciona uno de los tres métodos desde la página principal
+2. Configura el número de orígenes y destinos
+3. Ingresa los nombres, ofertas, demandas y costos
+4. Presiona "Calcular Solución"
+5. Visualiza los resultados con la tabla de asignaciones y el costo total
+
+## ⚠️ Notas Importantes
+
+- El problema debe estar **balanceado**: la suma de ofertas debe ser igual a la suma de demandas
+- Los costos deben ser números positivos
+- Las ofertas y demandas deben ser números no negativos
