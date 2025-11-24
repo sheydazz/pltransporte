@@ -6,8 +6,7 @@ import React, { useState } from "react";
  */
 interface ConfiguracionTransporteProps {
   onCalcular: (datos: DatosTransporte) => void;
-  colorPrimario: string;
-  colorSecundario: string;
+  textoBoton?: string;
 }
 
 /**
@@ -29,13 +28,10 @@ export interface DatosTransporte {
  * Permite configurar orígenes, destinos, ofertas, demandas y matriz de costos.
  * 
  * @param onCalcular - Función callback que se ejecuta cuando el usuario presiona "Calcular Solución"
- * @param colorPrimario - Color principal del tema (blue, purple, indigo)
- * @param colorSecundario - Color secundario del tema (purple, pink, cyan)
  */
 export default function ConfiguracionTransporte({
   onCalcular,
-  colorPrimario,
-  colorSecundario,
+  textoBoton = "Calcular Solución",
 }: ConfiguracionTransporteProps) {
   const [numOrigenes, setNumOrigenes] = useState(2);
   const [numDestinos, setNumDestinos] = useState(2);
@@ -407,7 +403,7 @@ export default function ConfiguracionTransporte({
               onClick={handleCalcular}
               className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-2 rounded-lg hover:from-green-600 hover:to-green-700 transition-all font-semibold shadow-md"
             >
-              Calcular Solución
+              {textoBoton}
             </button>
           </div>
         </>

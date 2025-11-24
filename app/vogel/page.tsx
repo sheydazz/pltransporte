@@ -4,223 +4,20 @@ import Link from "next/link";
 import ConfiguracionTransporte, {
   DatosTransporte,
 } from "../components/ConfiguracionTransporte";
-
-/**
- * Interface que define la estructura del resultado del método de Aproximación de Vogel
- */
-interface ResultadoVogel {
-  asignaciones: number[][];
-  costoTotal: number;
-  origenes: string[];
-  destinos: string[];
-  costos: number[][];
-}
+import { ResultadoMetodoBase, calcularVogel } from "@/lib/metodosTransporte";
 
 /**
  * Componente principal de la página del Método de Aproximación de Vogel
  * Maneja la recolección de datos, cálculo y visualización de resultados
  */
 function Vogel() {
-  const [resultado, setResultado] = useState<ResultadoVogel | null>(null);
+  const [resultado, setResultado] = useState<ResultadoMetodoBase | null>(null);
   const [errorMensaje, setErrorMensaje] = useState<string | null>(null);
 
-  /**
-   * Implementa el algoritmo de Aproximación de Vogel (VAM) para resolver problemas de transporte.
-   * 
-   * Este método heurístico considera penalizaciones (diferencias entre los dos menores costos)
-   * para encontrar mejores soluciones iniciales:
-   * 1. Calcula penalizaciones para cada fila y columna (diferencia entre 2 menores costos)
-   * 2. Selecciona la fila o columna con mayor penalización
-   * 3. Asigna a la celda de menor costo en esa fila/columna
-   * 4. Tacha la fila o columna satisfecha
-   * 5. Repite hasta que quede exactamente una fila o columna sin tachar
-   * 
-   * @param initialCosts - Matriz de costos unitarios de transporte
-   * @param initialSupply - Array de ofertas disponibles en cada origen
-   * @param initialDemand - Array de demandas requeridas en cada destino
-   * @returns Matriz de asignaciones (cantidad a transportar de cada origen a cada destino)
-   */
-  function vogelMethod(
-    initialCosts: number[][],
-    initialSupply: number[],
-    initialDemand: number[]
-  ): number[][] {
-    // Crear copias para no modificar los originales
-    const supply = [...initialSupply];
-    const demand = [...initialDemand];
-    const costs = initialCosts.map((row) => [...row]);
-
-    const m = supply.length;
-    const n = demand.length;
-
-    // Matriz de asignación inicial en ceros
-    const allocation = Array.from({ length: m }, () => Array(n).fill(0));
-
-    // Control de filas y columnas activas
-    const rowActive = Array(m).fill(true);
-    const colActive = Array(n).fill(true);
-
-    /**
-     * Calcula la penalización de una fila o columna (diferencia entre los dos menores costos)
-     * @param values - Array de costos disponibles en la fila/columna
-     * @returns Diferencia entre el segundo menor y el menor costo, o 0 si hay menos de 2 valores
-     */
-    function penalty(values: number[]): number {
-      if (values.length === 0) return 0;
-      if (values.length === 1) return values[0]; // Si solo hay un valor, usar ese
-
-      const sorted = values.slice().sort((a, b) => a - b);
-      return sorted[1] - sorted[0];
-    }
-
-    // Repetir hasta que todo esté asignado
-    while (true) {
-      // Verificar si quedan celdas activas
-      const hasActiveRow = rowActive.some((r) => r);
-      const hasActiveCol = colActive.some((c) => c);
-
-      if (!hasActiveRow || !hasActiveCol) break;
-
-      const rowPenalty = Array(m).fill(-1);
-      const colPenalty = Array(n).fill(-1);
-
-      // Calcular penalizaciones de filas
-      for (let i = 0; i < m; i++) {
-        if (!rowActive[i]) continue;
-
-        const rowValues = [];
-        for (let j = 0; j < n; j++) {
-          if (colActive[j]) rowValues.push(costs[i][j]);
-        }
-
-        if (rowValues.length > 0) {
-          rowPenalty[i] = penalty(rowValues);
-        }
-      }
-
-      // Calcular penalizaciones de columnas
-      for (let j = 0; j < n; j++) {
-        if (!colActive[j]) continue;
-
-        const colValues = [];
-        for (let i = 0; i < m; i++) {
-          if (rowActive[i]) colValues.push(costs[i][j]);
-        }
-
-        if (colValues.length > 0) {
-          colPenalty[j] = penalty(colValues);
-        }
-      }
-
-      // Encontrar la penalización máxima
-      const maxRow = Math.max(...rowPenalty.filter((p) => p >= 0));
-      const maxCol = Math.max(...colPenalty.filter((p) => p >= 0));
-
-      if (maxRow === -Infinity && maxCol === -Infinity) break;
-
-      let chosenRow = -1;
-      let chosenCol = -1;
-
-      // Decidir si trabajar con fila o columna (mayor penalización)
-      if (maxRow >= maxCol) {
-        // Escoger la fila con mayor penalización
-        chosenRow = rowPenalty.indexOf(maxRow);
-
-        // Encontrar la columna con menor costo en esa fila
-        let min = Infinity;
-        for (let j = 0; j < n; j++) {
-          if (colActive[j] && costs[chosenRow][j] < min) {
-            min = costs[chosenRow][j];
-            chosenCol = j;
-          }
-        }
-      } else {
-        // Escoger la columna con mayor penalización
-        chosenCol = colPenalty.indexOf(maxCol);
-
-        // Encontrar la fila con menor costo en esa columna
-        let min = Infinity;
-        for (let i = 0; i < m; i++) {
-          if (rowActive[i] && costs[i][chosenCol] < min) {
-            min = costs[i][chosenCol];
-            chosenRow = i;
-          }
-        }
-      }
-
-      if (chosenRow === -1 || chosenCol === -1) break;
-
-      // Asignar la cantidad máxima posible
-      const qty = Math.min(supply[chosenRow], demand[chosenCol]);
-      allocation[chosenRow][chosenCol] = qty;
-
-      // Actualizar oferta y demanda
-      supply[chosenRow] -= qty;
-      demand[chosenCol] -= qty;
-
-      // Desactivar filas/columnas satisfechas
-      if (supply[chosenRow] === 0) rowActive[chosenRow] = false;
-      if (demand[chosenCol] === 0) colActive[chosenCol] = false;
-    }
-
-    return allocation;
-  }
-
-  /**
-   * Calcula el costo total de la solución de transporte
-   * @param asignacion - Matriz de asignaciones (cantidades transportadas)
-   * @param costos - Matriz de costos unitarios
-   * @returns Costo total = suma de (asignación[i][j] * costo[i][j]) para todas las celdas
-   */
-  function calcularCostoTotal(asignacion: number[][], costos: number[][]): number {
-    let total = 0;
-    for (let i = 0; i < asignacion.length; i++) {
-      for (let j = 0; j < asignacion[0].length; j++) {
-        total += asignacion[i][j] * costos[i][j];
-      }
-    }
-    return total;
-  }
-
-  /**
-   * Maneja el cálculo de la solución cuando el usuario presiona "Calcular Solución"
-   * Valida que el problema esté balanceado y ejecuta el algoritmo de Vogel
-   * @param datos - Datos del problema de transporte ingresados por el usuario
-   */
   const handleCalcular = (datos: DatosTransporte) => {
     try {
-      const costos = datos.costos.map((fila) =>
-        fila.map((valor) => Number(valor))
-      );
-      const ofertas = datos.ofertas.map((valor) => Number(valor));
-      const demandas = datos.demandas.map((valor) => Number(valor));
-
-      const totalOferta = ofertas.reduce((acc, val) => acc + val, 0);
-      const totalDemanda = demandas.reduce((acc, val) => acc + val, 0);
-
-      if (totalOferta !== totalDemanda) {
-        throw new Error(
-          `El problema no está balanceado. Oferta total: ${totalOferta}, Demanda total: ${totalDemanda}.`
-        );
-      }
-
-      const asignaciones = vogelMethod(costos, ofertas, demandas);
-      const costoTotal = calcularCostoTotal(asignaciones, costos);
-
-      const origenes = datos.origenes.map((nombre, idx) =>
-        nombre && nombre.trim().length > 0 ? nombre : `Origen ${idx + 1}`
-      );
-      const destinos = datos.destinos.map((nombre, idx) =>
-        nombre && nombre.trim().length > 0 ? nombre : `Destino ${idx + 1}`
-      );
-
-      setResultado({
-        asignaciones,
-        costoTotal,
-        origenes,
-        destinos,
-        costos,
-      });
+      const resultadoVogel = calcularVogel(datos);
+      setResultado(resultadoVogel);
       setErrorMensaje(null);
     } catch (error) {
       setResultado(null);
@@ -291,8 +88,6 @@ function Vogel() {
         {/* Configuración */}
         <ConfiguracionTransporte
           onCalcular={handleCalcular}
-          colorPrimario="indigo"
-          colorSecundario="cyan"
         />
 
         {errorMensaje && (

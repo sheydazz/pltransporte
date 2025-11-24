@@ -4,18 +4,10 @@ import Link from "next/link";
 import ConfiguracionTransporte, {
   DatosTransporte,
 } from "../components/ConfiguracionTransporte";
-
-/**
- * Interface que define la estructura del resultado del método de la Esquina Noroeste
- */
-interface ResultadoEsquina {
-  asignaciones: number[][];
-  costoTotal: number;
-  pasos: string[];
-  origenes: string[];
-  destinos: string[];
-  costos: number[][];
-}
+import {
+  ResultadoMetodoConPasos,
+  calcularEsquinaNoroeste,
+} from "@/lib/metodosTransporte";
 
 /**
  * Formatea un número con separadores de miles y decimales
@@ -29,110 +21,10 @@ const formatearNumero = (valor: number, decimales = 0) =>
     maximumFractionDigits: decimales,
   });
 
-/**
- * Implementa el algoritmo de la Esquina Noroeste para resolver problemas de transporte.
- * 
- * El método se inicia en la esquina noroeste (arriba-izquierda) y sigue estos pasos:
- * 1. Asigna lo más posible a la celda seleccionada
- * 2. Ajusta las cantidades de oferta y demanda
- * 3. Tacha la fila o columna con oferta/demanda cero
- * 4. Se mueve a la derecha si tachó una columna, o abajo si tachó una fila
- * 
- * @param datos - Datos del problema de transporte (orígenes, destinos, ofertas, demandas, costos)
- * @returns Objeto con las asignaciones, costo total, pasos del algoritmo y datos originales
- * @throws Error si el problema no está balanceado (oferta total ≠ demanda total)
- */
-function calcularEsquinaNoroeste(datos: DatosTransporte): ResultadoEsquina {
-  const { origenes, destinos } = datos;
-  const suministros = datos.ofertas.map((valor) => Number(valor));
-  const demandas = datos.demandas.map((valor) => Number(valor));
-  const costos = datos.costos.map((fila) => fila.map((valor) => Number(valor)));
-
-  const totalOferta = suministros.reduce((acc, val) => acc + val, 0);
-  const totalDemanda = demandas.reduce((acc, val) => acc + val, 0);
-
-  if (totalOferta !== totalDemanda) {
-    throw new Error(
-      `El problema no está balanceado. Oferta total: ${totalOferta}, Demanda total: ${totalDemanda}.`
-    );
-  }
-
-  const asignaciones = suministros.map(() =>
-    Array(demandas.length).fill(0)
-  );
-  const pasos: string[] = [];
-
-  let i = 0;
-  let j = 0;
-  let numeroPaso = 1;
-
-  while (i < suministros.length && j < demandas.length) {
-    if (suministros[i] === 0) {
-      i++;
-      continue;
-    }
-    if (demandas[j] === 0) {
-      j++;
-      continue;
-    }
-
-    const cantidad = Math.min(suministros[i], demandas[j]);
-    asignaciones[i][j] = cantidad;
-
-    const ofertaAntes = suministros[i];
-    const demandaAntes = demandas[j];
-    suministros[i] -= cantidad;
-    demandas[j] -= cantidad;
-
-    pasos.push(
-      `Paso ${numeroPaso}: Se asignan ${cantidad} unidades de ${origenes[i]} hacia ${destinos[j]} (costo unitario ${costos[i][j]}). Oferta: ${ofertaAntes}→${suministros[i]}, Demanda: ${demandaAntes}→${demandas[j]}.`
-    );
-    numeroPaso++;
-
-    if (suministros[i] === 0 && demandas[j] === 0) {
-      pasos.push(
-        `La oferta de ${origenes[i]} y la demanda de ${destinos[j]} llegaron a 0 simultáneamente. Se avanza a la siguiente columna y se conserva el 0 en la fila.`
-      );
-      j++;
-    } else if (suministros[i] === 0) {
-      pasos.push(
-        `La oferta de ${origenes[i]} se agota. Se baja a la siguiente fila.`
-      );
-      i++;
-    } else if (demandas[j] === 0) {
-      pasos.push(
-        `La demanda de ${destinos[j]} se satisface. Se avanza a la siguiente columna.`
-      );
-      j++;
-    }
-  }
-
-  const costoTotal = asignaciones.reduce((total, fila, filaIdx) => {
-    return (
-      total +
-      fila.reduce(
-        (acc, valor, colIdx) => acc + valor * costos[filaIdx][colIdx],
-        0
-      )
-    );
-  }, 0);
-
-  return {
-    asignaciones,
-    costoTotal,
-    pasos,
-    origenes,
-    destinos,
-    costos,
-  };
-}
-
-/**
- * Componente principal de la página del Método de la Esquina Noroeste
- * Maneja la recolección de datos, cálculo y visualización de resultados
- */
 function Esquina() {
-  const [resultado, setResultado] = useState<ResultadoEsquina | null>(null);
+  const [resultado, setResultado] = useState<ResultadoMetodoConPasos | null>(
+    null
+  );
   const [errorMensaje, setErrorMensaje] = useState<string | null>(null);
 
   /**
@@ -200,8 +92,6 @@ function Esquina() {
 
         <ConfiguracionTransporte
           onCalcular={handleCalcular}
-          colorPrimario="blue"
-          colorSecundario="purple"
         />
 
         {errorMensaje && (

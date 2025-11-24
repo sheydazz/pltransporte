@@ -4,18 +4,10 @@ import Link from "next/link";
 import ConfiguracionTransporte, {
   DatosTransporte,
 } from "../components/ConfiguracionTransporte";
-
-/**
- * Interface que define la estructura del resultado del método del Costo Mínimo
- */
-interface ResultadoCostoMinimo {
-  asignaciones: number[][];
-  costoTotal: number;
-  pasos: string[];
-  origenes: string[];
-  destinos: string[];
-  costos: number[][];
-}
+import {
+  ResultadoMetodoConPasos,
+  calcularCostoMinimo,
+} from "@/lib/metodosTransporte";
 
 /**
  * Formatea un número con separadores de miles y decimales
@@ -29,121 +21,10 @@ const formatearNumero = (valor: number, decimales = 0) =>
     maximumFractionDigits: decimales,
   });
 
-/**
- * Implementa el algoritmo del Costo Mínimo para resolver problemas de transporte.
- * 
- * Este método determina una mejor solución inicial al concentrarse en las rutas más económicas:
- * 1. Asigna lo más posible a la celda con el costo unitario mínimo
- * 2. Tacha la fila o columna satisfecha y ajusta ofertas/demandas
- * 3. Selecciona la siguiente celda no tachada con costo mínimo
- * 4. Repite hasta que quede exactamente una fila o columna sin tachar
- * 
- * @param datos - Datos del problema de transporte (orígenes, destinos, ofertas, demandas, costos)
- * @returns Objeto con las asignaciones, costo total, pasos del algoritmo y datos originales
- * @throws Error si el problema no está balanceado (oferta total ≠ demanda total)
- */
-function calcularCostoMinimo(datos: DatosTransporte): ResultadoCostoMinimo {
-  const { origenes, destinos } = datos;
-  const suministros = datos.ofertas.map((valor) => Number(valor));
-  const demandas = datos.demandas.map((valor) => Number(valor));
-  const costos = datos.costos.map((fila) => fila.map((valor) => Number(valor)));
-
-  const totalOferta = suministros.reduce((acc, val) => acc + val, 0);
-  const totalDemanda = demandas.reduce((acc, val) => acc + val, 0);
-
-  if (totalOferta !== totalDemanda) {
-    throw new Error(
-      `El problema no está balanceado. Oferta total: ${totalOferta}, Demanda total: ${totalDemanda}.`
-    );
-  }
-
-  const asignaciones = suministros.map(() =>
-    Array(demandas.length).fill(0)
-  );
-  const pasos: string[] = [];
-
-  let numeroPaso = 1;
-
-  /**
-   * Encuentra la celda disponible (no tachada) con el costo unitario mínimo
-   * @returns Objeto con las coordenadas {fila, col} de la celda de menor costo, o null si no hay más celdas
-   */
-  const obtenerSiguienteCelda = () => {
-    let minCosto = Number.POSITIVE_INFINITY;
-    let pos: { fila: number; col: number } | null = null;
-    for (let i = 0; i < suministros.length; i++) {
-      if (suministros[i] === 0) continue;
-      for (let j = 0; j < demandas.length; j++) {
-        if (demandas[j] === 0) continue;
-        const costo = costos[i][j];
-        if (costo < minCosto) {
-          minCosto = costo;
-          pos = { fila: i, col: j };
-        }
-      }
-    }
-    return pos;
-  };
-
-  while (true) {
-    const siguiente = obtenerSiguienteCelda();
-    if (!siguiente) break;
-    const { fila: i, col: j } = siguiente;
-
-    const cantidad = Math.min(suministros[i], demandas[j]);
-    const ofertaAntes = suministros[i];
-    const demandaAntes = demandas[j];
-
-    asignaciones[i][j] = cantidad;
-    suministros[i] -= cantidad;
-    demandas[j] -= cantidad;
-
-    pasos.push(
-      `Paso ${numeroPaso}: Se asignan ${cantidad} unidades en la celda (${origenes[i]} → ${destinos[j]}), costo unitario ${costos[i][j]}. Oferta ${origenes[i]}: ${ofertaAntes}→${suministros[i]}, Demanda ${destinos[j]}: ${demandaAntes}→${demandas[j]}.`
-    );
-    numeroPaso++;
-
-    if (suministros[i] === 0 && demandas[j] === 0) {
-      pasos.push(
-        `La oferta de ${origenes[i]} y la demanda de ${destinos[j]} quedaron en 0 simultáneamente. Se tacha solo una de las dos y se deja el 0 visible en la otra, continuando con la siguiente celda de costo mínimo.`
-      );
-    } else if (suministros[i] === 0) {
-      pasos.push(
-        `La oferta de ${origenes[i]} se agotó. Se tacha la fila correspondiente.`
-      );
-    } else if (demandas[j] === 0) {
-      pasos.push(
-        `La demanda de ${destinos[j]} se satisfizo. Se tacha la columna correspondiente.`
-      );
-    }
-  }
-
-  const costoTotal = asignaciones.reduce((total, fila, filaIdx) => {
-    return (
-      total +
-      fila.reduce(
-        (acc, valor, colIdx) => acc + valor * costos[filaIdx][colIdx],
-        0
-      )
-    );
-  }, 0);
-
-  return {
-    asignaciones,
-    costoTotal,
-    pasos,
-    origenes,
-    destinos,
-    costos,
-  };
-}
-
-/**
- * Componente principal de la página del Método del Costo Mínimo
- * Maneja la recolección de datos, cálculo y visualización de resultados
- */
 function CostoMinimo() {
-  const [resultado, setResultado] = useState<ResultadoCostoMinimo | null>(null);
+  const [resultado, setResultado] = useState<ResultadoMetodoConPasos | null>(
+    null
+  );
   const [errorMensaje, setErrorMensaje] = useState<string | null>(null);
 
   /**
@@ -211,8 +92,6 @@ function CostoMinimo() {
 
         <ConfiguracionTransporte
           onCalcular={handleCalcular}
-          colorPrimario="purple"
-          colorSecundario="pink"
         />
 
         {errorMensaje && (
