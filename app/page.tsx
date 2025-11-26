@@ -189,8 +189,6 @@ export default function Home() {
 
   const renderResultado = (metodo: MetodoId, resultado: ResultadoMetodo) => {
     const config = METODOS[metodo];
-    const tienePasos =
-      "pasos" in resultado && Array.isArray(resultado.pasos) && resultado.pasos;
 
     return (
       <section
@@ -248,24 +246,6 @@ export default function Home() {
             </p>
           </div>
         </div>
-
-        {tienePasos && (
-          <div className="rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 p-4 bg-gray-50/70 dark:bg-gray-800/40">
-            <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
-              Bitácora del algoritmo
-            </p>
-            <ol className="space-y-2 text-sm text-gray-600 dark:text-gray-300 list-decimal pl-5">
-              {(resultado as ResultadoMetodoConPasos).pasos.slice(0, 6).map(
-                (paso, index) => (
-                  <li key={`${metodo}-paso-${index}`}>{paso}</li>
-                )
-              )}
-              {(resultado as ResultadoMetodoConPasos).pasos.length > 6 && (
-                <li className="text-gray-400">...</li>
-              )}
-            </ol>
-          </div>
-        )}
 
         <div>
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
@@ -370,7 +350,7 @@ export default function Home() {
               Programación Lineal
             </h1>
             <h2 className="text-3xl md:text-4xl font-semibold text-gray-800 dark:text-gray-100">
-              Laboratorio de Transporte
+              metodos de transporte
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
               Registre los datos una sola vez, resuelva con el método que
